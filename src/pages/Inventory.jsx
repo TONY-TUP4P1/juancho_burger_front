@@ -10,6 +10,9 @@ const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
 
+  // 🌍 DEFINICIÓN DE LA URL DE LA API (Adaptable para Vercel e InfinityFree)
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
   const categories = ['all', 'Hamburguesas', 'Bebidas', 'Complementos', 'Postres', 'Ensaladas', 'Combos'];
 
   useEffect(() => {
@@ -22,7 +25,8 @@ const Inventory = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/products', {
+      // ✅ Usamos API_URL
+      const response = await fetch(`${API_URL}/api/products`, {
         headers: {
           'Authorization': `Bearer ${getToken()}`,
           'Accept': 'application/json'
@@ -31,7 +35,7 @@ const Inventory = () => {
 
       const data = await response.json();
       if (data.success || response.ok) {
-        setProducts(data.data || data); // Soporte para ambas estructuras de respuesta
+        setProducts(data.data || data); 
       }
     } catch (error) {
       console.error('Error al cargar productos:', error);
@@ -42,9 +46,10 @@ const Inventory = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/products/stats/all', {
+      // ✅ Usamos API_URL
+      const response = await fetch(`${API_URL}/api/products/stats/all`, {
         headers: {
-          'Authorization': `Bearer ${getToken()}`, // CORREGIDO: Usaba 'token' antes
+          'Authorization': `Bearer ${getToken()}`,
           'Accept': 'application/json'
         }
       });
@@ -74,7 +79,8 @@ const Inventory = () => {
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/products/${productId}`, {
+      // ✅ Usamos API_URL
+      const response = await fetch(`${API_URL}/api/products/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
@@ -94,21 +100,19 @@ const Inventory = () => {
     }
   };
 
-  // --- CORRECCIÓN PRINCIPAL AQUÍ ---
   const handleToggleAvailability = async (product) => {
-    // 1. Actualización Optimista: Cambiamos la UI inmediatamente para que se sienta rápido
+    // Actualización Optimista
     const updatedProducts = products.map(p => 
       p.id === product.id ? { ...p, available: !p.available } : p
     );
     setProducts(updatedProducts);
 
     try {
-      // 2. Llamada a la API
-      // Nota: Si tu backend no tiene la ruta 'toggle-availability', usa un PUT normal a /products/{id}
-      const response = await fetch(`http://127.0.0.1:8000/api/products/${product.id}/toggle-availability`, {
+      // ✅ Usamos API_URL
+      const response = await fetch(`${API_URL}/api/products/${product.id}/toggle-availability`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${getToken()}`, // CORREGIDO: Antes decía 'token' y fallaba
+          'Authorization': `Bearer ${getToken()}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
@@ -118,12 +122,10 @@ const Inventory = () => {
         throw new Error('Falló la actualización en servidor');
       }
       
-      // Actualizamos estadísticas en segundo plano
       fetchStats();
 
     } catch (error) {
       console.error('Error al cambiar disponibilidad:', error);
-      // Si falla, revertimos los cambios recargando la lista original
       fetchProducts();
       alert('No se pudo cambiar la disponibilidad. Verifica tu conexión.');
     }
@@ -134,7 +136,6 @@ const Inventory = () => {
     fetchStats();
   };
 
-  // Filtrar productos
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'all' || product.category === filterCategory;
@@ -311,7 +312,7 @@ const Inventory = () => {
                     </td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => handleToggleAvailability(product)} // Pasamos el objeto completo
+                        onClick={() => handleToggleAvailability(product)}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                           product.available
                             ? 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -347,7 +348,6 @@ const Inventory = () => {
         </div>
       </div>
 
-      {/* Modal de formulario */}
       {showForm && (
         <ProductForm
           product={editingProduct}
